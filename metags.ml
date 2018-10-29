@@ -77,6 +77,28 @@ let keypress w ev =
 	else
 		false
 
+let redraw (dr: GDraw.drawable) l_timer l_turn ev =
+	Pango.Layout.set_text l_timer (Printf.sprintf "%02d:%02d" !timer_mins !timer_secs);
+	if !the_end then
+	begin
+		Pango.Layout.set_text l_turn "";
+		Pango.Layout.set_text l_timer "THE END";
+		stop_timer ()
+	end
+	else
+	begin
+		if nr_phases > 1 then
+			Pango.Layout.set_text l_turn (Printf.sprintf "TURN %d, %s" (!current_turn + 1) phase_names.(!current_phase))
+		else
+			Pango.Layout.set_text l_turn (Printf.sprintf "TURN %d" (!current_turn + 1));
+	end;
+	let (x, y) = dr#size in
+	let (w, h) = Pango.Layout.get_pixel_size l_timer in
+	dr#put_layout ~x:((x - w) / 2) ~y:((y - h) / 2) ~fore:`WHITE ~back:`BLACK l_timer;
+	let (w, h) = Pango.Layout.get_pixel_size l_turn in
+	dr#put_layout ~x:((x - w) / 2) ~y:5 ~fore:`WHITE ~back:`BLACK l_turn;
+	false
+
 let _ =
 	GtkMain.Main.init ();
 	let w = GWindow.window ~show:true ~width:300 ~height:300 ~title:"MeTAGS" () in
@@ -90,39 +112,18 @@ let _ =
 	dr#set_foreground `WHITE;
 
 	let ctx = a#misc#create_pango_context in
-	let l = ctx#create_layout in
-	let fd = Pango.Font.copy ctx#font_description in
-	Pango.Font.set_size fd (256 * Pango.scale);
-	Pango.Layout.set_font_description l fd;
-	let l2 = ctx#create_layout in
-	let fd2 = Pango.Font.copy ctx#font_description in
-	Pango.Font.set_size fd2 (32 * Pango.scale);
-	Pango.Layout.set_font_description l2 fd2;
+	let l_timer = ctx#create_layout in
+	let fd_timer = Pango.Font.copy ctx#font_description in
+	Pango.Font.set_size fd_timer (256 * Pango.scale);
+	Pango.Layout.set_font_description l_timer fd_timer;
+	let l_turn = ctx#create_layout in
+	let fd_turn = Pango.Font.copy ctx#font_description in
+	Pango.Font.set_size fd_turn (32 * Pango.scale);
+	Pango.Layout.set_font_description l_turn fd_turn;
 
 	start_timer w;
 
-	a#event#connect#expose ~callback:(fun ev -> 
-		Pango.Layout.set_text l (Printf.sprintf "%02d:%02d" !timer_mins !timer_secs);
-		if !the_end then
-		begin
-			Pango.Layout.set_text l2 "";
-			Pango.Layout.set_text l "THE END";
-			stop_timer ()
-		end
-		else
-		begin
-			if nr_phases > 1 then
-				Pango.Layout.set_text l2 (Printf.sprintf "TURN %d, %s" (!current_turn + 1) phase_names.(!current_phase))
-			else
-				Pango.Layout.set_text l2 (Printf.sprintf "TURN %d" (!current_turn + 1));
-		end;
-		let (x, y) = dr#size in
-		let (w, h) = Pango.Layout.get_pixel_size l in
-		dr#put_layout ~x:((x - w) / 2) ~y:((y - h) / 2) ~fore:`WHITE ~back:`BLACK l;
-		let (w, h) = Pango.Layout.get_pixel_size l2 in
-		dr#put_layout ~x:((x - w) / 2) ~y:5 ~fore:`WHITE ~back:`BLACK l2;
-		false
-	);
+	a#event#connect#expose ~callback:(redraw dr l_timer l_turn);
 	
 	w#fullscreen ();
 	GMain.Main.main ()
