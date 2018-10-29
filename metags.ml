@@ -92,11 +92,11 @@ let _ =
 	let ctx = a#misc#create_pango_context in
 	let l = ctx#create_layout in
 	let fd = Pango.Font.copy ctx#font_description in
-	Pango.Font.set_size fd (72 * Pango.scale);
+	Pango.Font.set_size fd (256 * Pango.scale);
 	Pango.Layout.set_font_description l fd;
 	let l2 = ctx#create_layout in
 	let fd2 = Pango.Font.copy ctx#font_description in
-	Pango.Font.set_size fd2 (20 * Pango.scale);
+	Pango.Font.set_size fd2 (32 * Pango.scale);
 	Pango.Layout.set_font_description l2 fd2;
 
 	start_timer w;
