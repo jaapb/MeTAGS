@@ -1,4 +1,5 @@
 open GdkKeysyms
+open Arg
 
 let phases = [| [| 10; 30; 10 |]; [| 5; 20; 5 |]; [| 5; 20; 5 |] |]
 let phase_names = [| "Preparation"; "Combat"; "Team Time" |]
@@ -12,6 +13,11 @@ let timer_secs = ref 0
 let the_end = ref false
 
 let timer = ref None
+
+let full_screen = ref false
+
+let arg_spec =
+	["-fs", Unit (fun () -> full_screen := true), "Full screen"]
 
 let advance_phase () =
 	incr current_phase;
@@ -125,5 +131,6 @@ let _ =
 
 	a#event#connect#expose ~callback:(redraw dr l_timer l_turn);
 	
-	w#fullscreen ();
+	if !full_screen then
+		w#fullscreen ();
 	GMain.Main.main ()
