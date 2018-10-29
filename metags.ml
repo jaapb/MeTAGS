@@ -19,7 +19,10 @@ let advance_phase () =
 	begin
 		incr current_turn;
 		if !current_turn >= nr_turns then
-			the_end := true;
+		begin
+			current_turn := 0;
+			the_end := true
+		end;
 		current_phase := 0;
 	end;
 	timer_mins := phases.(!current_turn).(!current_phase);
