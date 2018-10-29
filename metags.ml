@@ -15,6 +15,7 @@ let the_end = ref false
 let timer = ref None
 
 let full_screen = ref false
+let file_names = ref []
 
 let arg_spec =
 	["-fs", Unit (fun () -> full_screen := true), "Full screen"]
@@ -106,7 +107,7 @@ let redraw (dr: GDraw.drawable) l_timer l_turn ev =
 	false
 
 let _ =
-	Arg.parse arg_spec (fun s -> file_names := s::!file_names) "MeTAGS";
+	Arg.parse arg_spec (fun s -> file_names := s::!file_names) "Usage: metags [parameters] [files]";
 	GtkMain.Main.init ();
 	let w = GWindow.window ~show:true ~width:300 ~height:300 ~title:"MeTAGS" () in
 	w#event#connect#key_press ~callback:(keypress w);
