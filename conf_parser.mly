@@ -38,12 +38,6 @@ let range_from_to s e =
 let default_background = ref `BLACK
 let default_foreground = ref `WHITE
 
-let default_turn () =
-	{ name = None;
-		duration = 0;
-		phases = [| |]
-	}
- 
 let default_phase () =
 	{ background_colour = !default_background;
 		foreground_colour = !default_foreground;
@@ -51,19 +45,12 @@ let default_phase () =
 		duration = 0;
 	}
 
-let do_turn_command old_t old_p = function
-| `Name n -> { old_t with name = Some n }, old_p
-| `Duration d -> { old_t with duration = d }, old_p
-| `Background_colour c -> old_t, { old_p with background_colour = c }
-| `Foreground_colour c -> old_t, { old_p with foreground_colour = c }
-| _ -> raise (Invalid_argument "Unknown turn command")
-
 let do_phase_command old = function
 | `Background_colour c -> { old with background_colour = c }
 | `Foreground_colour c -> { old with foreground_colour = c }
 | `Name n -> { old with name = Some n }
 | `Duration d -> { old with duration = d }
-| _ -> raise (Invalid_argument "Unknown phase command")
+| _ -> raise (Invalid_argument "Unknown command")
 
 %}
 
@@ -75,9 +62,11 @@ configuration:
 	EOF
 	{ let l = List.flatten ts in
 		let max = List.fold_left (fun acc (i, _) -> max i acc) 0 l in
-		let res = Array.init max (fun i -> default_turn ()) in
-		List.iter (fun (i, p) -> res.(i - 1) <- p) l;
-		Some res
+		let res = Array.init max (fun i -> None) in
+		List.iter (fun (i, p) -> res.(i - 1) <- Some p) l;
+		Some (Array.mapi (fun i p -> match p with
+			| None -> raise (Failure (Printf.sprintf "turn %d not specified" (i+1)))
+			| Some x -> x) res)	
 	}
 	
 general_configuration:
@@ -91,11 +80,11 @@ turn_specification:
 	TURN r = range 
 	t = turn_command*
 	ps = phase_specification*
- 	{ let (turn, default_turn_phase) = List.fold_left (fun (acc_t, acc_p) c ->
-			do_turn_command acc_t acc_p c
-		) (default_turn (), default_phase ()) t in
+	{ let default_turn_phase = List.fold_left (fun acc c ->
+			do_phase_command acc c
+		) (default_phase ()) t in 
 		let l = List.flatten ps in
-		let max = List.fold_left (fun acc (i, _) -> max i acc) 0 l in
+		let max = List.fold_left (fun acc (i, _) -> max i acc) 1 l in
 		let res = Array.init max (fun i -> default_turn_phase) in
 		List.iter (fun (i, p) -> 
 			res.(i - 1) <-  List.fold_left (fun acc c -> 
@@ -103,7 +92,7 @@ turn_specification:
 			) res.(i - 1) p
 		) l;
 		List.rev_map (fun i ->
-			i, { turn with phases = res }
+			i, { phases = res }
 		) r
 	}
 
@@ -144,4 +133,4 @@ duration:
 
 colour_spec:
 | n = STRING { `NAME n }
-| RGB LPAREN r = NUMBER COMMA g = NUMBER COMMA b = NUMBER RPAREN { `RGB (r, g, b) }
+| RGB LPAREN r = NUMBER COMMA g = NUMBER COMMA b = NUMBER RPAREN { Printf.eprintf "%d %d %d\n%!" r g b; `RGB (r, g, b) }

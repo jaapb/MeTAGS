@@ -1,4 +1,4 @@
-type colour_spec = [ `BLACK | `NAME of string | `RGB of int * int * int | `WHITE ]
+type colour_spec = [`BLACK | `COLOR of Gdk.color | `NAME of string | `RGB of int * int * int | `WHITE ]
 
 type phase =
 	{ name: string option;
@@ -8,9 +8,7 @@ type phase =
 	}	
 
 type turn = 
-	{ name: string option;
-		duration: int;
-		phases: phase array
+	{ phases: phase array
 	}	
 
 type configuration = turn array

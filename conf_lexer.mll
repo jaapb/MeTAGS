@@ -18,10 +18,16 @@ rule token = parse
 | ['0'-'9']+ as n { NUMBER (int_of_string n) }
 | '"' ([^'"']* as s) '"' { STRING s }
 | '-' { HYPHEN }
+| ',' { COMMA }
+| '(' { LPAREN }
+| ')' { RPAREN }
 | "turn" { TURN }
 | "phase" { PHASE }
 | "name" { NAME }
 | "duration" { DURATION }
+| "foreground" { FOREGROUND_COLOUR }
+| "background" { BACKGROUND_COLOUR }
+| "rgb" { RGB }
 | eof	{ EOF }
 | _ { raise (SyntaxError (Printf.sprintf "At offset %d: unexpected character.\n" (Lexing.lexeme_start lexbuf))) }
 
