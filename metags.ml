@@ -1,14 +1,11 @@
 open GdkKeysyms
 open Arg
 
-let phases = [| [| 10; 30; 10 |]; [| 5; 20; 5 |]; [| 5; 20; 5 |] |]
-let phase_names = [| "Preparation"; "Combat"; "Team Time" |]
+open Configuration
 
 let current_turn = ref 0
-let nr_turns = Array.length phases
-let nr_phases = Array.length phases.(0)
 let current_phase = ref 0
-let timer_mins = ref phases.(0).(0)
+let timer_mins = ref 0
 let timer_secs = ref 0
 let the_end = ref false
 
@@ -20,19 +17,32 @@ let file_names = ref []
 let arg_spec =
 	["-fs", Unit (fun () -> full_screen := true), "Full screen"]
 
+let name_of_turn i =
+	match !turns.(i).name with
+	| None -> Printf.sprintf "TURN %d" (i + 1)
+	| Some x -> x
+
+let name_of_phase t i =
+	match !turns.(t).phases.(i).name with
+	| None -> Printf.sprintf "phase %d" (i + 1)
+	| Some x -> x
+
 let advance_phase () =
 	incr current_phase;
-	if !current_phase >= nr_phases then
+	if !current_phase >= Array.length !turns.(!current_turn).phases then
 	begin
 		incr current_turn;
-		if !current_turn >= nr_turns then
+		if !current_turn >= Array.length !turns then
 		begin
 			current_turn := 0;
 			the_end := true
 		end;
 		current_phase := 0;
 	end;
-	timer_mins := phases.(!current_turn).(!current_phase);
+	if Array.length !turns.(!current_turn).phases = 0 then
+		timer_mins := !turns.(!current_turn).duration
+	else
+		timer_mins := !turns.(!current_turn).phases.(!current_phase).duration;
 	timer_secs := 0
 
 let stop_timer () =
@@ -94,10 +104,11 @@ let redraw (dr: GDraw.drawable) l_timer l_turn ev =
 	end
 	else
 	begin
-		if nr_phases > 1 then
-			Pango.Layout.set_text l_turn (Printf.sprintf "TURN %d, %s" (!current_turn + 1) phase_names.(!current_phase))
+		let tname = name_of_turn !current_turn in
+		if Array.length !turns.(!current_turn).phases > 0 then
+			Pango.Layout.set_text l_turn (Printf.sprintf "%s, %s" tname (name_of_phase !current_turn !current_phase))
 		else
-			Pango.Layout.set_text l_turn (Printf.sprintf "TURN %d" (!current_turn + 1));
+			Pango.Layout.set_text l_turn tname
 	end;
 	let (x, y) = dr#size in
 	let (w, h) = Pango.Layout.get_pixel_size l_timer in
@@ -106,8 +117,16 @@ let redraw (dr: GDraw.drawable) l_timer l_turn ev =
 	dr#put_layout ~x:((x - w) / 2) ~y:5 ~fore:`WHITE ~back:`BLACK l_turn;
 	false
 
-let _ =
+let () =
 	Arg.parse arg_spec (fun s -> file_names := s::!file_names) "Usage: metags [parameters] [files]";
+	List.iter (fun f ->
+		read_from_file f 
+	) !file_names;
+	if Array.length !turns.(0).phases = 0 then
+		timer_mins := !turns.(0).duration
+	else
+		timer_mins := !turns.(0).phases.(0).duration;
+
 	GtkMain.Main.init ();
 	let w = GWindow.window ~show:true ~width:300 ~height:300 ~title:"MeTAGS" () in
 	w#event#connect#key_press ~callback:(keypress w);

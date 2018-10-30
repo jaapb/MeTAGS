@@ -1,2 +1,4 @@
+true: use_menhir
 <metags.ml>:	package(lablgtk2)
+<conf_types.ml>:	package(lablgtk2)
 "metags.native":	package(lablgtk2)
