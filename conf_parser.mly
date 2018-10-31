@@ -133,4 +133,4 @@ duration:
 
 colour_spec:
 | n = STRING { `NAME n }
-| RGB LPAREN r = NUMBER COMMA g = NUMBER COMMA b = NUMBER RPAREN { Printf.eprintf "%d %d %d\n%!" r g b; `RGB (r, g, b) }
+| RGB LPAREN r = NUMBER COMMA g = NUMBER COMMA b = NUMBER RPAREN { `RGB (r, g, b) }

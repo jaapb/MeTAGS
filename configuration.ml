@@ -25,7 +25,6 @@ let rec parse_and_print lexbuf =
   | None -> ()
 
 let read_from_file f =
-	Printf.eprintf "starting configuration...\n%!";
 	let ch = open_in f in
 	let lexbuf = Lexing.from_channel ch in
 	lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = f };
