@@ -8,7 +8,8 @@ type phase =
 	}	
 
 type turn = 
-	{ phases: phase array
+	{ name: string option;
+		phases: phase array
 	}	
 
 type configuration = turn array

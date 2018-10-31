@@ -17,6 +17,11 @@ let file_names = ref []
 let arg_spec =
 	["-fs", Unit (fun () -> full_screen := true), "Full screen"]
 
+let name_of_turn t =
+	match !turns.(t).name with
+	| None -> ""
+	| Some x -> Printf.sprintf " (%s)" x
+	
 let name_of_phase t i =
 	match !turns.(t).phases.(i).name with
 	| None -> Printf.sprintf "phase %d" (i + 1)
@@ -106,9 +111,9 @@ let redraw (dr: GDraw.drawable) l_timer l_turn ev =
 	else
 	begin
 		if Array.length !turns.(!current_turn).phases > 1 then
-			Pango.Layout.set_text l_turn (Printf.sprintf "TURN %d, %s" (!current_turn + 1) (name_of_phase !current_turn !current_phase))
+			Pango.Layout.set_text l_turn (Printf.sprintf "TURN %d%s, %s" (!current_turn + 1) (name_of_turn !current_turn) (name_of_phase !current_turn !current_phase))
 		else
-			Pango.Layout.set_text l_turn (Printf.sprintf "TURN %d" (!current_turn + 1))
+			Pango.Layout.set_text l_turn (Printf.sprintf "TURN %d%s" (!current_turn + 1) (name_of_turn !current_turn))
 	end;
 	let (x, y) = dr#size in
 	let (w, h) = Pango.Layout.get_pixel_size l_timer in
