@@ -16,6 +16,8 @@ let file_names = ref []
 
 let arg_spec =
 	["-fs", Unit (fun () -> full_screen := true), "Full screen"]
+let arg_usage =
+	"Usage: metags [parameters] [files]"
 
 let name_of_turn t =
 	match !turns.(t).name with
@@ -123,7 +125,12 @@ let redraw (dr: GDraw.drawable) l_timer l_turn ev =
 	false
 
 let () =
-	Arg.parse arg_spec (fun s -> file_names := s::!file_names) "Usage: metags [parameters] [files]";
+	Arg.parse arg_spec (fun s -> file_names := s::!file_names) arg_usage;
+	if List.length !file_names = 0 then
+	begin
+		Arg.usage arg_spec arg_usage;
+		exit 1;
+	end;
 	List.iter (fun f ->
 		read_from_file f 
 	) !file_names;
