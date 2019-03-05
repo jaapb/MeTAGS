@@ -3,6 +3,7 @@ open Conf_lexer
 open Lexing
 
 let turns = ref [| |]
+let images = ref []
 
 let print_position outx lexbuf =
   let pos = lexbuf.lex_curr_p in
@@ -21,7 +22,8 @@ let parse_with_error lexbuf =
 let rec parse_and_print lexbuf =
   match parse_with_error lexbuf with
   | Some value ->
-			turns := value
+			turns := value.turns;
+			images := value.images
   | None -> ()
 
 let read_from_file f =

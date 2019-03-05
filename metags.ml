@@ -14,6 +14,8 @@ let timer = ref None
 let full_screen = ref false
 let file_names = ref []
 
+let images_tbl = Hashtbl.create 32
+
 let arg_spec =
 	["-fs", Unit (fun () -> full_screen := true), "Full screen"]
 let arg_usage =
@@ -29,7 +31,7 @@ let name_of_phase t i =
 	| None -> Printf.sprintf "phase %d" (i + 1)
 	| Some x -> x
 
-let new_phase a dr =
+let new_phase a (dr: GDraw.drawable) =
 	let phase = !turns.(!current_turn).phases.(!current_phase) in
 	let (bg: GDraw.color) = phase.background_colour in
 	let (fg: GDraw.color) = phase.foreground_colour in
@@ -38,7 +40,7 @@ let new_phase a dr =
 	a#misc#modify_bg [`NORMAL, bg; `ACTIVE, bg; `PRELIGHT, bg; `INSENSITIVE, bg; `SELECTED, bg];
 	dr#set_background bg;
 	dr#set_foreground fg
-
+	
 let advance_phase a dr =
 	incr current_phase;
 	if !current_phase >= Array.length !turns.(!current_turn).phases then
@@ -119,9 +121,14 @@ let redraw (dr: GDraw.drawable) l_timer l_turn ev =
 	end;
 	let (x, y) = dr#size in
 	let (w, h) = Pango.Layout.get_pixel_size l_timer in
-	dr#put_layout ~x:((x - w) / 2) ~y:((y - h) / 2) (*~fore:`WHITE ~back:`BLACK*) l_timer;
+	dr#put_layout ~x:((x - w) / 2) ~y:((y - h) / 2) l_timer;
 	let (w, h) = Pango.Layout.get_pixel_size l_turn in
-	dr#put_layout ~x:((x - w) / 2) ~y:5 (*~fore:`WHITE ~back:`BLACK*) l_turn;
+	dr#put_layout ~x:((x - w) / 2) ~y:5 l_turn;
+	(match !turns.(!current_turn).phases.(!current_phase).image with
+	| None -> ()
+	| Some i ->
+		let p = Hashtbl.find images_tbl i in
+		dr#put_pixbuf ~x:0 ~y:0  p);
 	false
 
 let () =
@@ -136,6 +143,11 @@ let () =
 	) !file_names;
 
 	GtkMain.Main.init ();
+
+	List.iter (fun i ->
+		Hashtbl.add images_tbl i (GdkPixbuf.from_file i)
+	) !images;
+
 	let w = GWindow.window ~show:true ~width:300 ~height:300 ~title:"MeTAGS" () in
 	let a = GMisc.drawing_area ~packing:w#add () in
 	let aw = a#misc#realize (); a#misc#window in

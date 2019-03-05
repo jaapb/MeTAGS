@@ -12,6 +12,7 @@
 %token COMMA
 %token BACKGROUND_COLOUR
 %token FOREGROUND_COLOUR
+%token IMAGE
 %token NAME
 %token <string> STRING
 %token RPAREN LPAREN
@@ -21,6 +22,13 @@
 
 %{
 open Conf_types
+
+module OrdString =
+struct
+	type t = string
+	let compare = String.compare
+end
+module StringSet = Set.Make(OrdString)
 
 let range_from_to s e =
 	if e < s then []
@@ -37,6 +45,7 @@ let range_from_to s e =
 
 let default_background = ref `BLACK
 let default_foreground = ref `WHITE
+let default_image = ref None
 
 let default_turn =
 	{ name = None;
@@ -46,6 +55,7 @@ let default_turn =
 let default_phase () =
 	{ background_colour = !default_background;
 		foreground_colour = !default_foreground;
+		image = !default_image;
 		name = None;
 		duration = 0;
 	}
@@ -53,6 +63,7 @@ let default_phase () =
 let do_turn_command old_t old_p = function
 | `Background_colour c -> (old_t, { old_p with background_colour = c })
 | `Foreground_colour c -> (old_t, { old_p with foreground_colour = c })
+| `Image i -> (old_t, { old_p with image = Some i })
 | `Name n -> ({ old_t with name = Some n }, old_p)
 | `Duration d -> (old_t, { old_p with duration = d })
 | _ -> raise (Invalid_argument "Unknown turn command")
@@ -61,6 +72,7 @@ let do_turn_command old_t old_p = function
 let do_phase_command old = function
 | `Background_colour c -> { old with background_colour = c }
 | `Foreground_colour c -> { old with foreground_colour = c }
+| `Image i -> { old with image = Some i }
 | `Name n -> { old with name = Some n }
 | `Duration d -> { old with duration = d }
 | _ -> raise (Invalid_argument "Unknown phase command")
@@ -77,9 +89,19 @@ configuration:
 		let max = List.fold_left (fun acc (i, _) -> max i acc) 0 l in
 		let res = Array.init max (fun i -> None) in
 		List.iter (fun (i, p) -> res.(i - 1) <- Some p) l;
-		Some (Array.mapi (fun i p -> match p with
+		let images = ref StringSet.empty in
+		Array.iter (function
+		| None -> ()
+		| Some t -> Array.iter (fun p ->
+			match p.image with
+			| None -> ()
+			| Some i -> images := StringSet.add i !images 
+			) t.phases
+		) res;	
+		let turns = Array.mapi (fun i p -> match p with
 			| None -> raise (Failure (Printf.sprintf "turn %d not specified" (i+1)))
-			| Some x -> x) res)	
+			| Some x -> x) res in
+		Some { turns = turns ; images = StringSet.elements !images }
 	}
 	
 general_configuration:
@@ -88,6 +110,7 @@ general_configuration:
 general_command:
 |	c = background_colour { default_background := c }
 | c = foreground_colour { default_background := c }
+| i = image { default_image := Some i }
 
 turn_specification:
 	TURN r = range 
@@ -112,6 +135,7 @@ turn_specification:
 turn_command:
 | c = background_colour { `Background_colour c }
 | c = foreground_colour { `Foreground_colour c }
+| i = image { `Image i }
 | n = name { `Name n }
 | d = duration { `Duration d }
 
@@ -124,6 +148,7 @@ phase_specification:
 phase_command:
 | c = background_colour { `Background_colour c }
 | c = foreground_colour { `Foreground_colour c }
+| i = image { `Image i }
 | n = name { `Name n }
 | d = duration { `Duration d }
 
@@ -137,6 +162,9 @@ background_colour:
 
 foreground_colour:
 | FOREGROUND_COLOUR s = colour_spec { s }
+
+image:
+| IMAGE f = STRING { f }
 
 name:
 | NAME n = STRING { n }

@@ -27,6 +27,7 @@ rule token = parse
 | "duration" { DURATION }
 | "foreground" { FOREGROUND_COLOUR }
 | "background" { BACKGROUND_COLOUR }
+| "image" { IMAGE }
 | "rgb" { RGB }
 | eof	{ EOF }
 | _ { raise (SyntaxError (Printf.sprintf "At offset %d: unexpected character.\n" (Lexing.lexeme_start lexbuf))) }

@@ -4,7 +4,8 @@ type phase =
 	{ name: string option;
 		duration: int;
 		background_colour: colour_spec;
-		foreground_colour: colour_spec
+		foreground_colour: colour_spec;
+		image: string option
 	}	
 
 type turn = 
@@ -12,5 +13,7 @@ type turn =
 		phases: phase array
 	}	
 
-type configuration = turn array
-	
+type configuration =
+	{ turns: turn array;
+		images: string list
+	}
