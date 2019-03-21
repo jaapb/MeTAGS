@@ -120,15 +120,17 @@ let redraw (dr: GDraw.drawable) l_timer l_turn ev =
 			Pango.Layout.set_text l_turn (Printf.sprintf "TURN %d%s" (!current_turn + 1) (name_of_turn !current_turn))
 	end;
 	let (x, y) = dr#size in
-	let (w, h) = Pango.Layout.get_pixel_size l_timer in
-	dr#put_layout ~x:((x - w) / 2) ~y:((y - h) / 2) l_timer;
-	let (w, h) = Pango.Layout.get_pixel_size l_turn in
-	dr#put_layout ~x:((x - w) / 2) ~y:5 l_turn;
 	(match !turns.(!current_turn).phases.(!current_phase).image with
 	| None -> ()
 	| Some i ->
 		let p = Hashtbl.find images_tbl i in
-		dr#put_pixbuf ~x:0 ~y:0  p);
+		let s = GdkPixbuf.create ~width:x ~height:y () in
+		GdkPixbuf.scale ~dest:s ~width:x ~height:y p;
+		dr#put_pixbuf ~x:0 ~y:0 s);
+	let (w, h) = Pango.Layout.get_pixel_size l_timer in
+	dr#put_layout ~x:((x - w) / 2) ~y:((y - h) / 2) l_timer;
+	let (w, h) = Pango.Layout.get_pixel_size l_turn in
+	dr#put_layout ~x:((x - w) / 2) ~y:5 l_turn;
 	false
 
 let () =
